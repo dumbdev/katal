@@ -17,7 +17,7 @@ A Laravel-inspired web framework for Bun with TypeScript. Build modern web appli
 ## Installation
 
 ```bash
-bun install
+bun install katal
 ```
 
 ## Quick Start
