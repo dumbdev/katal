@@ -1,6 +1,6 @@
 # Simple Route Registration
 
-This is the **recommended** way to use Contro. Each controller handles a single route, and routes are registered outside the controller.
+This is the **recommended** way to use Katal. Each controller handles a single route, and routes are registered outside the controller.
 
 ## Philosophy
 
@@ -296,4 +296,4 @@ class UserController extends Controller {
 4. **Register routes in one place** - Easy to see your API structure
 5. **Use validation options** - Let the framework handle validation
 
-This is the cleanest, most maintainable way to build APIs with Contro!
+This is the cleanest, most maintainable way to build APIs with Katal!

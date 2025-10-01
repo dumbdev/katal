@@ -1,4 +1,4 @@
-# Contro
+# Katal
 
 A Laravel-inspired web framework for Bun with TypeScript. Build modern web applications with decorators, controllers, middleware, validation, and authentication.
 

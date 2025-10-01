@@ -1,15 +1,15 @@
 {
-  "name": "contro",
+  "name": "katal",
   "version": "1.0.0",
   "description": "A simple yet powerful web framework for Bun with TypeScript",
   "license": "MIT",
-  "homepage": "https://github.com/dumbdev/contro#readme",
+  "homepage": "https://github.com/dumbdev/katal#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dumbdev/contro"
+    "url": "git+https://github.com/dumbdev/katal"
   },
-  "bugs": "https://github.com/dumbdev/contro/issues",
-  "author": "Syed Najam Abbas <syednajamabbasnaqvi@gmail.com>",
+  "bugs": "https://github.com/dumbdev/katal/issues",
+  "author": "Syed Najam Abbas (https://najamabbas.me)",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

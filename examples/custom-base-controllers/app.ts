@@ -247,7 +247,7 @@ class HealthController extends LoggingController {
 class HomeController extends Controller {
     async handle() {
         return this.success({
-            message: "Welcome to Contro Framework",
+            message: "Welcome to Katal Framework",
             version: "0.3.0",
         });
     }

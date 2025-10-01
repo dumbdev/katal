@@ -1,6 +1,6 @@
 # Logging Integration
 
-The `LoggingIntegration` class provides a flexible logging system for controllers in the Contro framework. It supports multiple log destinations (console, file, database, etc.) and different log levels.
+The `LoggingIntegration` class provides a flexible logging system for controllers in the Katal framework. It supports multiple log destinations (console, file, database, etc.) and different log levels.
 
 ## Features
 
