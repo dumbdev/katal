@@ -1,9 +1,8 @@
-import { Application, Controller } from "../../src/index.ts";
+import { Application, Controller } from "../../src";
 import type {
-    RequestContext,
     Middleware,
     MiddlewareContext,
-} from "../../src/index.ts";
+} from "../../src";
 // Add DOM lib to tsconfig.json to include types like BodyInit
 
 const app = new Application({ port: 3000 });

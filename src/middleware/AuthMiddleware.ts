@@ -1,5 +1,5 @@
-import type { Middleware, MiddlewareContext } from "../types/index.ts";
-import { Auth } from "../auth/Auth.ts";
+import type { Middleware, MiddlewareContext } from "../types";
+import { Auth } from "../auth";
 
 export function createAuthMiddleware(auth: Auth): Middleware {
     return {

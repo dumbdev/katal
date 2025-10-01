@@ -3,10 +3,10 @@ import type {
     RouteDefinition,
     HttpMethod,
     ValidationSchema,
-} from "../types/index.ts";
+} from "../types";
 import { MiddlewareManager } from "./MiddlewareManager.ts";
-import type { Controller } from "../http/Controller.ts";
-import { Validator } from "../validation/Validator.ts";
+import type { Controller } from "../http";
+import { Validator } from "../validation";
 
 export interface RouteOptions {
     middleware?: string[];

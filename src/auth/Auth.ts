@@ -1,8 +1,7 @@
-import type { User, AuthConfig } from "../types/index.ts";
+import type { User, AuthConfig } from "../types";
 
 export class Auth {
     private config: AuthConfig;
-    private users = new Map<string, User>();
 
     constructor(config: AuthConfig) {
         this.config = config;

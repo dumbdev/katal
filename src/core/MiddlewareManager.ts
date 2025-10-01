@@ -1,4 +1,4 @@
-import type { Middleware, MiddlewareContext } from "../types/index.ts";
+import type { Middleware, MiddlewareContext } from "../types";
 
 export class MiddlewareManager {
     private globalMiddleware: Middleware[] = [];

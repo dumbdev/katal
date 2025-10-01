@@ -1,6 +1,6 @@
-import type { RequestContext, ValidationSchema } from "../types/index.ts";
-import { Validator } from "../validation/Validator.ts";
-import { LoggingIntegration } from "../logging/LoggingIntegration.ts";
+import type { RequestContext, ValidationSchema } from "../types";
+import { Validator } from "../validation";
+import { LoggingIntegration } from "../logging";
 
 export abstract class Controller {
     /**

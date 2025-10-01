@@ -5,8 +5,8 @@ import {
     createAuthMiddleware,
     createCorsMiddleware,
     createRateLimitMiddleware,
-} from "../../src/index.ts";
-import type { RequestContext } from "../../src/index.ts";
+} from "../../src";
+import type { RequestContext } from "../../src";
 
 const app = new Application({ port: 3000 });
 const router = app.getRouter();

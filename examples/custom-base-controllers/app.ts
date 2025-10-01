@@ -1,11 +1,4 @@
-import { Application, Controller } from "../../src/index.ts";
-import type { RequestContext } from "../../src/index.ts";
-
-// Define the API response type for the cache
-interface ApiResponse {
-    data: any; // Consider making this more specific based on your API response structure
-    [key: string]: any; // For any additional properties
-}
+import { Application, Controller } from "../../src";
 
 const app = new Application({ port: 3000 });
 const router = app.getRouter();

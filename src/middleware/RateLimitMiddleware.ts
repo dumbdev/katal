@@ -1,4 +1,4 @@
-import type { Middleware, MiddlewareContext } from "../types/index.ts";
+import type { Middleware, MiddlewareContext } from "../types";
 
 interface RateLimitOptions {
     windowMs: number; // Time window in milliseconds
