@@ -1,0 +1,11 @@
+examples/
+node_modules/
+*.log
+.DS_Store
+.env
+.vscode/
+.idea/
+*.test.ts
+*.spec.ts
+tsconfig.json
+bun.lock
