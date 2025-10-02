@@ -1,4 +1,3 @@
-import type { BunFile } from "bun";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
