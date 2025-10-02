@@ -6,7 +6,6 @@ export * from "./http";
 
 // Logging
 export * from "./logging";
-export type { LogEntry, LogDestination } from "./logging/LoggingIntegration.ts";
 
 // Validation
 export * from "./validation";
