@@ -13,7 +13,7 @@ The Application class is the central component of the framework, providing HTTP 
 
 ### Basic Usage
 ```typescript
-import { Application } from 'contro';
+import { Application } from 'katal';
 
 const app = new Application({
     port: 3000,
@@ -67,7 +67,7 @@ const cache = app.resolve<CacheService>('cache');
 
 ### Request Handling
 ```typescript
-import { Controller } from 'contro';
+import { Controller } from 'katal';
 
 class UserController extends Controller {
     async handle(request: Request) {

@@ -1,12 +1,12 @@
 # Validation
 
 ## Overview
-Contro's validation system provides a type-safe validation framework built on explicit schema definitions. Validation is automatically handled by the Controller base class when a schema is defined.
+Katal's validation system provides a type-safe validation framework built on explicit schema definitions. Validation is automatically handled by the Controller base class when a schema is defined.
 
 ## Basic Usage
 
 ```typescript
-import { Controller, ValidationSchema } from 'contro';
+import { Controller, ValidationSchema } from 'katal';
 
 class CreateUserController extends Controller {
     // Define validation schema - validation happens automatically
