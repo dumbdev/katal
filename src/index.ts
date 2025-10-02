@@ -17,17 +17,4 @@ export * from "./auth";
 export * from "./middleware";
 
 // Types
-export type {
-    HttpMethod,
-    RequestContext,
-    RouteHandler,
-    RouteDefinition,
-    Middleware,
-    MiddlewareContext,
-    AppConfig,
-    ValidationRule,
-    ValidationSchema,
-    ValidationError,
-    User,
-    AuthConfig,
-} from "./types/index.ts";
+export * from "./types";
