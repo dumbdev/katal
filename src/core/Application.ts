@@ -62,6 +62,14 @@ export class Application {
     }
 
     /**
+     * Register named middleware
+     */
+    registerMiddleware(name: string, middleware: Middleware): this {
+        this.middlewareManager.register(name, middleware);
+        return this;
+    }
+
+    /**
      * Get the router instance
      */
     getRouter(): Router {
@@ -83,6 +91,17 @@ export class Application {
 
         // Run boot logic here (service providers, etc.)
         this.booted = true;
+    }
+
+    /**
+     * Start the HTTP server
+     */
+    /**
+     * Get the server instance
+     * @returns The Bun server instance if started, otherwise undefined
+     */
+    getServer(): Server | undefined {
+        return this.server;
     }
 
     /**
