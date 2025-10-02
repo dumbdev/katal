@@ -1,6 +1,6 @@
 {
   "name": "katal",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple yet powerful web framework for Bun with TypeScript",
   "license": "MIT",
   "homepage": "https://github.com/dumbdev/katal#readme",
