@@ -9,3 +9,6 @@ node_modules/
 *.spec.ts
 tsconfig.json
 bun.lock
+.github
+docs
+examples
