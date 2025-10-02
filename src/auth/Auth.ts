@@ -8,25 +8,6 @@ export class Auth {
     }
 
     /**
-     * Generate a JWT token (simplified version using Bun's crypto)
-     */
-    async generateToken(user: User): Promise<string> {
-        const header = { alg: "HS256", typ: "JWT" };
-        const payload = {
-            sub: user.id,
-            user,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + this.getExpirationSeconds(),
-        };
-
-        const encodedHeader = this.base64UrlEncode(JSON.stringify(header));
-        const encodedPayload = this.base64UrlEncode(JSON.stringify(payload));
-        const signature = await this.sign(`${encodedHeader}.${encodedPayload}`);
-
-        return `${encodedHeader}.${encodedPayload}.${signature}`;
-    }
-
-    /**
      * Verify a JWT token
      */
     async verifyToken(token: string): Promise<User | null> {
@@ -34,17 +15,16 @@ export class Auth {
             const [encodedHeader, encodedPayload, signature] = token.split(".");
             if (!encodedHeader || !encodedPayload || !signature) return null;
 
-            // Verify signature
-            const expectedSignature = await this.sign(
-                `${encodedHeader}.${encodedPayload}`,
-            );
+            // Verify signature first to prevent tampering
+            const expectedSignature = await this.sign(`${encodedHeader}.${encodedPayload}`);
             if (signature !== expectedSignature) return null;
 
-            // Decode payload
+            // Decode and verify payload
             const payload = JSON.parse(this.base64UrlDecode(encodedPayload));
+            const currentTime = Math.floor(Date.now() / 1000);
 
-            // Check expiration
-            if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+            // Verify expiration
+            if (!payload.exp || currentTime >= payload.exp) {
                 return null;
             }
 
@@ -52,6 +32,26 @@ export class Auth {
         } catch {
             return null;
         }
+    }
+
+    /**
+     * Generate a JWT token (simplified version using Bun's crypto)
+     */
+    async generateToken(user: User): Promise<string> {
+        const currentTime = Math.floor(Date.now() / 1000);
+        const header = { alg: "HS256", typ: "JWT" };
+        const payload = {
+            sub: user.id,
+            user,
+            iat: currentTime,
+            exp: currentTime + this.getExpirationSeconds(),
+        };
+
+        const encodedHeader = this.base64UrlEncode(JSON.stringify(header));
+        const encodedPayload = this.base64UrlEncode(JSON.stringify(payload));
+        const signature = await this.sign(`${encodedHeader}.${encodedPayload}`);
+
+        return `${encodedHeader}.${encodedPayload}.${signature}`;
     }
 
     /**
