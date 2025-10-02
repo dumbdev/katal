@@ -167,4 +167,78 @@ describe("Router", () => {
         expect(routes[0]!.path).toBe("/test");
         expect(routes[1]!.path).toBe("/test");
     });
+
+    it("should handle nested route groups correctly", () => {
+        const router = new Router();
+
+        router.group("/api", (r) => {
+            r.get("/users", TestController);
+
+            r.group("/v1", (r2) => {
+                r2.get("/products", TestController);
+
+                r2.group("/admin", (r3) => {
+                    r3.post("/settings", TestAuthController);
+                });
+            });
+        });
+
+        const routes = router.getRoutes();
+        expect(routes).toHaveLength(3);
+        expect(routes[0]!.path).toBe("/api/users");
+        expect(routes[1]!.path).toBe("/api/v1/products");
+        expect(routes[2]!.path).toBe("/api/v1/admin/settings");
+    });
+
+    it("should handle multiple route groups at the same level", () => {
+        const router = new Router();
+
+        router.group("/api", (r) => {
+            r.get("/users", TestController);
+        });
+
+        router.group("/admin", (r) => {
+            r.post("/settings", TestAuthController);
+        });
+
+        const routes = router.getRoutes();
+        expect(routes).toHaveLength(2);
+        expect(routes[0]!.path).toBe("/api/users");
+        expect(routes[1]!.path).toBe("/admin/settings");
+    });
+
+    it("should handle route groups with trailing slashes", () => {
+        const router = new Router();
+
+        router.group("/api/", (r) => {
+            r.get("users/", TestController);
+
+            r.group("v1/", (r2) => {
+                r2.get("/auth/", TestAuthController);
+            });
+        });
+
+        const routes = router.getRoutes();
+        expect(routes).toHaveLength(2);
+        expect(routes[0]!.path).toBe("/api/users");
+        expect(routes[1]!.path).toBe("/api/v1/auth");
+    });
+
+    it("should preserve route options within groups", () => {
+        const router = new Router();
+
+        router.group("/api", (r) => {
+            r.post("/users", TestController, {
+                middleware: ["auth"],
+                validation: {
+                    name: { type: "string", required: true }
+                }
+            });
+        });
+
+        const routes = router.getRoutes();
+        expect(routes).toHaveLength(1);
+        expect(routes[0]!.path).toBe("/api/users");
+        expect(routes[0]!.middleware).toEqual(["auth"]);
+    });
 });
