@@ -1,268 +1,83 @@
-# Logging Integration
+# Logging
 
-The `LoggingIntegration` class provides a flexible logging system for controllers in the Katal framework. It supports multiple log destinations (console, file, database, etc.) and different log levels.
+## Overview
+Contro's logging system provides a flexible, extensible logging solution with multiple destinations and log levels.
 
 ## Features
-
-- **Multiple Log Levels**: DEBUG, INFO, WARN, ERROR
-- **Multiple Destinations**: Console, File, or custom destinations
-- **Structured Logging**: Include context data with your logs
-- **Error Logging**: Log errors with stack traces
-- **Extensible**: Create custom log destinations
-- **Chainable API**: Fluent interface for configuration
+- Multiple log levels (DEBUG, INFO, WARN, ERROR)
+- Multiple concurrent destinations (Console, File)
+- Colored console output
+- Structured logging with context
+- Error stack traces
+- Atomic file writes
+- Asynchronous operation
 
 ## Basic Usage
 
-### Console Logging
-
 ```typescript
-class MyController extends Controller {
-    async handle() {
-        const logger = this.LoggingIntegration().toConsole();
+import { LoggingIntegration, LogLevel } from 'contro/logging';
 
-        await logger.info("User logged in", { userId: 123 });
-        await logger.warn("Low disk space");
-        await logger.error("Database connection failed", error);
+const logger = new LoggingIntegration()
+    .setMinLevel(LogLevel.INFO)
+    .toConsole()
+    .toFile('./logs/app.log');
 
-        return this.success({ message: "Done" });
-    }
-}
-```
+// Basic logging
+await logger.info('Application started');
+await logger.error('Error occurred', new Error('Something went wrong'));
 
-### File Logging
-
-```typescript
-class MyController extends Controller {
-    async handle() {
-        const logger = this.LoggingIntegration().toFile("./logs/app.log");
-
-        await logger.info("Request processed", {
-            path: this.context.request.url,
-            method: this.context.request.method,
-        });
-
-        return this.success({ message: "Logged to file" });
-    }
-}
-```
-
-### Multiple Destinations
-
-```typescript
-class MyController extends Controller {
-    async handle() {
-        // Log to both console and file
-        const logger = this.LoggingIntegration()
-            .toConsole()
-            .toFile("./logs/app.log");
-
-        await logger.info("This goes to both destinations");
-
-        return this.success({ message: "Done" });
-    }
-}
+// Logging with context
+await logger.info('User action', {
+    userId: 123,
+    action: 'login'
+});
 ```
 
 ## Log Levels
 
-The framework supports four log levels:
-
-- **DEBUG**: Detailed information for debugging
-- **INFO**: General informational messages
-- **WARN**: Warning messages
-- **ERROR**: Error messages
-
-### Setting Minimum Log Level
-
 ```typescript
-const logger = this.LoggingIntegration().toConsole().setMinLevel(LogLevel.INFO); // Only log INFO, WARN, and ERROR
-
-await logger.debug("This won't be logged");
-await logger.info("This will be logged");
-```
-
-## Custom Log Destinations
-
-You can create custom log destinations by implementing the `LogDestination` interface:
-
-```typescript
-import type { LogDestination, LogEntry } from "contro";
-
-class DatabaseDestination implements LogDestination {
-    async write(entry: LogEntry): Promise<void> {
-        // Save to database
-        await db.logs.insert({
-            level: entry.level,
-            message: entry.message,
-            timestamp: entry.timestamp,
-            context: entry.context,
-            error: entry.error,
-        });
-    }
-}
-
-// Use it in your controller
-class MyController extends Controller {
-    async handle() {
-        const logger = this.LoggingIntegration()
-            .toConsole()
-            .addDestination(new DatabaseDestination());
-
-        await logger.info("This goes to console and database");
-
-        return this.success({ message: "Done" });
-    }
+enum LogLevel {
+    DEBUG = "debug",
+    INFO = "info",
+    WARN = "warn",
+    ERROR = "error"
 }
 ```
 
-### Example: Slack Destination
+## Destinations
+
+### Console Destination
+Provides colored output to the console with formatted messages:
 
 ```typescript
-class SlackDestination implements LogDestination {
-    constructor(private webhookUrl: string) {}
+const logger = new LoggingIntegration()
+    .toConsole();
 
-    async write(entry: LogEntry): Promise<void> {
-        // Only send errors to Slack
-        if (entry.level !== LogLevel.ERROR) return;
+// Outputs with color based on level:
+// [2025-10-02T12:34:56.789Z] INFO  Message
+// [2025-10-02T12:34:56.789Z] ERROR Error message
+```
 
-        await fetch(this.webhookUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                text: `🚨 Error: ${entry.message}`,
-                attachments: [
-                    {
-                        color: "danger",
-                        fields: [
-                            {
-                                title: "Timestamp",
-                                value: entry.timestamp.toISOString(),
-                            },
-                            {
-                                title: "Context",
-                                value: JSON.stringify(entry.context),
-                            },
-                        ],
-                    },
-                ],
-            }),
-        });
-    }
+### File Destination
+Writes logs to a file with atomic operations:
+
+```typescript
+const logger = new LoggingIntegration()
+    .toFile('./logs/app.log');
+
+// Creates file if it doesn't exist
+// Appends logs atomically
+// Handles concurrent writes safely
+```
+
+### Custom Destinations
+Implement your own destinations by implementing the LogDestination interface:
+
+```typescript
+interface LogDestination {
+    write(entry: LogEntry): Promise<void> | void;
 }
-```
 
-### Example: Email Destination
-
-```typescript
-class EmailDestination implements LogDestination {
-    constructor(
-        private emailService: EmailService,
-        private recipients: string[],
-    ) {}
-
-    async write(entry: LogEntry): Promise<void> {
-        // Only send critical errors via email
-        if (entry.level !== LogLevel.ERROR) return;
-
-        await this.emailService.send({
-            to: this.recipients,
-            subject: `[ERROR] ${entry.message}`,
-            body: `
-        Timestamp: ${entry.timestamp.toISOString()}
-        Message: ${entry.message}
-        Context: ${JSON.stringify(entry.context, null, 2)}
-        Error: ${entry.error?.message}
-        Stack: ${entry.error?.stack}
-      `,
-        });
-    }
-}
-```
-
-## Advanced Usage
-
-### Logging with Context
-
-```typescript
-const logger = this.LoggingIntegration().toConsole();
-
-await logger.info("User action", {
-    userId: this.user.id,
-    action: "purchase",
-    productId: 123,
-    amount: 99.99,
-    timestamp: new Date().toISOString(),
-});
-```
-
-### Logging Errors
-
-```typescript
-try {
-    await someOperation();
-} catch (error) {
-    const logger = this.LoggingIntegration().toConsole();
-
-    await logger.error("Operation failed", error as Error, {
-        operation: "someOperation",
-        userId: 123,
-    });
-
-    return this.error("Operation failed");
-}
-```
-
-### Conditional Logging
-
-```typescript
-const logger = this.LoggingIntegration().toConsole();
-
-if (process.env.NODE_ENV === "production") {
-    logger.setMinLevel(LogLevel.WARN);
-} else {
-    logger.setMinLevel(LogLevel.DEBUG);
-}
-```
-
-### Reusing Logger Instance
-
-The logger is cached per controller instance, so you can call `LoggingIntegration()` multiple times:
-
-```typescript
-class MyController extends Controller {
-    async handle() {
-        // First call creates and configures the logger
-        const logger = this.LoggingIntegration()
-            .toConsole()
-            .toFile("./logs/app.log");
-
-        await logger.info("Step 1");
-
-        // Subsequent calls return the same instance
-        const sameLogger = this.LoggingIntegration();
-        await sameLogger.info("Step 2");
-
-        return this.success({ message: "Done" });
-    }
-}
-```
-
-## API Reference
-
-### LoggingIntegration Methods
-
-- **`toConsole()`**: Add console destination
-- **`toFile(filePath: string)`**: Add file destination
-- **`addDestination(destination: LogDestination)`**: Add custom destination
-- **`setMinLevel(level: LogLevel)`**: Set minimum log level
-- **`debug(message: string, context?: Record<string, any>)`**: Log debug message
-- **`info(message: string, context?: Record<string, any>)`**: Log info message
-- **`warn(message: string, context?: Record<string, any>)`**: Log warning message
-- **`error(message: string, error?: Error, context?: Record<string, any>)`**: Log error message
-
-### LogEntry Interface
-
-```typescript
 interface LogEntry {
     level: LogLevel;
     message: string;
@@ -270,29 +85,83 @@ interface LogEntry {
     context?: Record<string, any>;
     error?: Error;
 }
+
+// Example Database Destination
+class DatabaseDestination implements LogDestination {
+    async write(entry: LogEntry): Promise<void> {
+        await db.logs.create({
+            level: entry.level,
+            message: entry.message,
+            timestamp: entry.timestamp,
+            context: entry.context,
+            error: entry.error?.message
+        });
+    }
+}
+
+// Usage
+logger.addDestination(new DatabaseDestination());
 ```
 
-### LogDestination Interface
+## Error Handling
+The logging system handles errors gracefully:
 
 ```typescript
-interface LogDestination {
-    write(entry: LogEntry): Promise<void> | void;
+// Destination errors are caught and logged
+try {
+    await logger.error('Failed operation', error);
+} catch (e) {
+    // Logging failures don't throw to application code
 }
+
+// File system errors are handled
+const logger = new LoggingIntegration()
+    .toFile('./invalid/path/app.log'); // Will handle directory creation errors
 ```
 
 ## Best Practices
 
-1. **Use appropriate log levels**: DEBUG for development, INFO for general events, WARN for potential issues, ERROR for failures
-2. **Include context**: Always include relevant context data to make logs more useful
-3. **Don't log sensitive data**: Avoid logging passwords, tokens, or personal information
-4. **Use structured logging**: Pass context as objects rather than concatenating strings
-5. **Configure per environment**: Use different log levels and destinations for development vs production
-6. **Implement log rotation**: For file logging, implement log rotation to prevent disk space issues
-7. **Monitor error logs**: Set up alerts for ERROR level logs in production
+1. Configure Different Log Levels
+```typescript
+// Development
+const logger = new LoggingIntegration()
+    .setMinLevel(LogLevel.DEBUG)
+    .toConsole();
 
-## Examples
+// Production
+const logger = new LoggingIntegration()
+    .setMinLevel(LogLevel.INFO)
+    .toFile('./logs/app.log')
+    .toFile('./logs/error.log', { minLevel: LogLevel.ERROR });
+```
 
-See the complete examples in:
+2. Use Structured Logging
+```typescript
+await logger.info('API Request', {
+    method: 'POST',
+    path: '/users',
+    duration: 123,
+    statusCode: 200
+});
+```
 
-- `examples/custom-base-controllers/app.ts` - Basic logging examples
-- `examples/logging/` - Advanced logging patterns (coming soon)
+3. Include Error Context
+```typescript
+try {
+    await someOperation();
+} catch (error) {
+    await logger.error('Operation failed', error, {
+        operationName: 'someOperation',
+        input: data
+    });
+}
+```
+
+4. Use Method Chaining
+```typescript
+const logger = new LoggingIntegration()
+    .setMinLevel(LogLevel.INFO)
+    .toConsole()
+    .toFile('./logs/app.log')
+    .addDestination(new CustomDestination());
+```

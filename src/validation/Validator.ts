@@ -136,6 +136,14 @@ export class Validator {
             errors.push(...nestedErrors);
         }
 
+        // Array item validation
+        if (rules.type === 'array' && rules.schema && Array.isArray(value)) {
+            value.forEach((item, index) => {
+                const itemErrors = this.validateField(`${field}[${index}]`, item, rules.schema!, fullField);
+                errors.push(...itemErrors);
+            });
+        }
+
         return errors;
     }
 
