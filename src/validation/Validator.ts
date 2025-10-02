@@ -38,30 +38,36 @@ export class Validator {
         field: string,
         value: any,
         rules: ValidationRule,
+        parentField: string = ''
     ): ValidationError[] {
         const errors: ValidationError[] = [];
+        const fullField = parentField ? `${parentField}.${field}` : field;
+
+        // Helper to create error with proper field path
+        const createError = (message: string): ValidationError => ({
+            field: fullField,
+            message: message.replace('{field}', fullField)
+        });
 
         // Required check
-        if (
-            rules.required &&
-            (value === undefined || value === null || value === "")
-        ) {
-            errors.push({
-                field,
-                message: `${field} is required`,
-            });
+        if (rules.required && (value === undefined || value === null || value === '')) {
+            errors.push(createError('{field} is required'));
             return errors; // Stop validation if required field is missing
         }
 
         // Skip other validations if value is not provided and not required
-        if (value === undefined || value === null) {
+        if (value === undefined || value === null || value === '') {
             return errors;
         }
 
         // Type check
         if (rules.type) {
-            const typeError = this.validateType(field, value, rules.type);
-            if (typeError) errors.push(typeError);
+            const typeError = this.validateType(fullField, value, rules.type);
+            if (typeError) {
+                errors.push(typeError);
+                // If type is wrong, skip further validations
+                return errors;
+            }
         }
 
         // Min/Max for numbers
@@ -109,24 +115,25 @@ export class Validator {
 
         // Enum check
         if (rules.enum && !rules.enum.includes(value)) {
-            errors.push({
-                field,
-                message: `${field} must be one of: ${rules.enum.join(", ")}`,
-            });
+            errors.push(createError(
+                `{field} must be one of: ${rules.enum.join(', ')}`
+            ));
         }
 
         // Custom validation
         if (rules.custom) {
             const result = rules.custom(value);
             if (result !== true) {
-                errors.push({
-                    field,
-                    message:
-                        typeof result === "string"
-                            ? result
-                            : `${field} is invalid`,
-                });
+                errors.push(createError(
+                    typeof result === 'string' ? result : '{field} is invalid'
+                ));
             }
+        }
+
+        // Nested object validation
+        if (rules.type === 'object' && rules.schema && value && typeof value === 'object' && !Array.isArray(value)) {
+            const nestedErrors = this.validateNestedObject(value, rules.schema, fullField);
+            errors.push(...nestedErrors);
         }
 
         return errors;
@@ -138,46 +145,93 @@ export class Validator {
     private static validateType(
         field: string,
         value: any,
-        type: string,
+        type: string | ValidationSchema,
     ): ValidationError | null {
+        // Handle nested schema validation
+        if (typeof type === 'object') {
+            if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+                return { field, message: `${field} must be an object` };
+            }
+            const { errors } = this.validate(value, type);
+            return errors.length > 0
+                ? { field, message: `${field} contains invalid fields` }
+                : null;
+        }
+
+        // Handle primitive types
         switch (type) {
-            case "string":
-                if (typeof value !== "string") {
+            case 'string':
+                if (typeof value !== 'string') {
                     return { field, message: `${field} must be a string` };
                 }
                 break;
-            case "number":
-                if (typeof value !== "number" || isNaN(value)) {
+            case 'number':
+                if (typeof value !== 'number' || isNaN(value)) {
                     return { field, message: `${field} must be a number` };
                 }
                 break;
-            case "boolean":
-                if (typeof value !== "boolean") {
+            case 'boolean':
+                if (typeof value !== 'boolean') {
                     return { field, message: `${field} must be a boolean` };
                 }
                 break;
-            case "email":
-                if (typeof value !== "string" || !this.isValidEmail(value)) {
+            case 'email':
+                if (typeof value !== 'string' || !this.isValidEmail(value)) {
                     return { field, message: `${field} must be a valid email` };
                 }
                 break;
-            case "url":
-                if (typeof value !== "string" || !this.isValidUrl(value)) {
+            case 'url':
+                if (typeof value !== 'string' || !this.isValidUrl(value)) {
                     return { field, message: `${field} must be a valid URL` };
                 }
                 break;
-            case "array":
+            case 'array':
                 if (!Array.isArray(value)) {
                     return { field, message: `${field} must be an array` };
                 }
                 break;
-            case "object":
-                if (typeof value !== "object" || Array.isArray(value)) {
+            case 'object':
+                if (value === null || typeof value !== 'object' || Array.isArray(value)) {
                     return { field, message: `${field} must be an object` };
                 }
                 break;
+            default:
+                return { field, message: `Unknown type: ${type}` };
         }
         return null;
+    }
+
+    /**
+     * Validate nested object properties
+     */
+    private static validateNestedObject(
+        obj: Record<string, any>,
+        schema: ValidationSchema,
+        parentField: string = ''
+    ): ValidationError[] {
+        const errors: ValidationError[] = [];
+
+        // Validate existing properties
+        for (const [key, value] of Object.entries(obj)) {
+            const rule = schema[key];
+            if (rule) {
+                const fieldErrors = this.validateField(key, value, rule, parentField);
+                errors.push(...fieldErrors);
+            }
+        }
+
+        // Check for required fields that are missing
+        for (const [key, rule] of Object.entries(schema)) {
+            if (rule.required && !(key in obj)) {
+                const fullField = parentField ? `${parentField}.${key}` : key;
+                errors.push({
+                    field: fullField,
+                    message: `${fullField} is required`
+                });
+            }
+        }
+
+        return errors;
     }
 
     /**

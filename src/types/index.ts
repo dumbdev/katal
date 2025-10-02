@@ -62,6 +62,7 @@ export interface ValidationRule {
     pattern?: RegExp;
     custom?: (value: any) => boolean | string;
     enum?: any[];
+    schema?: ValidationSchema;
 }
 
 export interface ValidationSchema {
