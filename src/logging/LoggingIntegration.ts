@@ -1,3 +1,7 @@
+import type { BunFile } from "bun";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
+
 /**
  * Log levels for categorizing log messages
  */
@@ -32,8 +36,8 @@ export interface LogDestination {
 export class ConsoleDestination implements LogDestination {
     private colors = {
         debug: "\x1b[36m", // Cyan
-        info: "\x1b[32m", // Green
-        warn: "\x1b[33m", // Yellow
+        info: "\x1b[32m",  // Green
+        warn: "\x1b[33m",  // Yellow
         error: "\x1b[31m", // Red
         reset: "\x1b[0m",
     };
@@ -64,12 +68,20 @@ export class ConsoleDestination implements LogDestination {
  * File log destination - logs to a file
  */
 export class FileDestination implements LogDestination {
-    constructor(private filePath: string) {}
+    constructor(private filePath: string) {
+        try {
+            const dir = dirname(filePath);
+            if (dir !== "." && !existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
+            }
+        } catch (error) {
+            // Ignore directory creation errors - we'll handle them during write
+        }
+    }
 
     async write(entry: LogEntry): Promise<void> {
         const timestamp = entry.timestamp.toISOString();
         const level = entry.level.toUpperCase().padEnd(5);
-
         let line = `[${timestamp}] ${level} ${entry.message}`;
 
         if (entry.context && Object.keys(entry.context).length > 0) {
@@ -86,17 +98,11 @@ export class FileDestination implements LogDestination {
         line += "\n";
 
         try {
-            // Use Bun's file API
-            const file = Bun.file(this.filePath);
-            const existingContent = (await file.exists())
-                ? await file.text()
-                : "";
-            await Bun.write(this.filePath, existingContent + line);
+            appendFileSync(this.filePath, line, { flag: 'a' });
         } catch (error) {
-            console.error(
-                `Failed to write to log file: ${this.filePath}`,
-                error,
-            );
+            const message = `Failed to write to log file: ${this.filePath}`;
+            console.error(message);
+            throw new Error(message);
         }
     }
 }
@@ -174,8 +180,23 @@ export class LoggingIntegration {
             error,
         };
 
-        const promises = this.destinations.map((dest) => dest.write(entry));
-        await Promise.all(promises);
+        const errors: Error[] = [];
+
+        // Handle destinations sequentially to avoid race conditions
+        for (const dest of this.destinations) {
+            try {
+                await Promise.resolve(dest.write(entry));
+            } catch (error) {
+                const errorMessage = `Failed to write to destination ${dest.constructor.name}`;
+                console.error(errorMessage, error);
+                errors.push(error as Error);
+            }
+        }
+
+        // If all destinations failed, throw an error
+        if (errors.length === this.destinations.length && this.destinations.length > 0) {
+            throw new Error("All destinations failed to write");
+        }
     }
 
     /**
