@@ -77,10 +77,12 @@ export class Router {
      */
     group(prefix: string, callback: (router: Router) => void): void {
         const previousPrefix = this.prefix;
-        this.prefix = this.normalizePath(previousPrefix + prefix);
+        const combinedPath = previousPrefix
+            ? this.normalizePath(previousPrefix + "/" + prefix)
+            : this.normalizePath(prefix);
 
+        this.prefix = combinedPath;
         callback(this);
-
         this.prefix = previousPrefix;
     }
 
@@ -93,7 +95,10 @@ export class Router {
         ControllerClass: new () => Controller,
         options?: RouteOptions,
     ): void {
-        const fullPath = this.normalizePath(this.prefix + path);
+        const fullPath = this.prefix
+            ? this.normalizePath(this.prefix + "/" + path)
+            : this.normalizePath(path);
+
         const handler: RouteHandler = async (context) => {
             // Validate if schema provided
             if (options?.validation) {
@@ -133,12 +138,13 @@ export class Router {
         handler: RouteHandler,
         middleware: string[] = [],
     ): void {
+        const normalizedPath = this.normalizePath(path);
         this.routes.push({
             method,
-            path: this.normalizePath(path),
+            path: normalizedPath,
             handler,
             middleware,
-            pattern: this.pathToRegex(path),
+            pattern: this.pathToRegex(normalizedPath),
         });
     }
 
@@ -256,15 +262,11 @@ export class Router {
         // Handle root path
         if (path === "/") return "/";
 
-        // Remove trailing slashes
-        let normalized = path.replace(/\/$/, "");
+        // Split path into segments and filter out empty ones
+        const segments = path.split("/").filter(segment => segment.length > 0);
 
-        // Ensure path starts with slash (unless it's empty)
-        if (normalized && !normalized.startsWith("/")) {
-            normalized = "/" + normalized;
-        }
-
-        return normalized;
+        // Join segments with single slashes and add leading slash
+        return "/" + segments.join("/");
     }
 
     /**
