@@ -62,8 +62,8 @@ router.get("/profile", ProfileController, {
 ## Complete Example
 
 ```typescript
-import { Application, Controller } from "contro";
-import type { RequestContext } from "contro";
+import { Application, Controller } from "katal";
+import type { RequestContext } from "katal";
 
 const app = new Application({ port: 3000 });
 const router = app.getRouter();
@@ -238,7 +238,7 @@ src/
 
 ```typescript
 // routes.ts
-import { Router } from "contro";
+import { Router } from "katal";
 import { HealthController } from "./controllers/HealthController";
 import { GetUsersController } from "./controllers/GetUsersController";
 
@@ -248,7 +248,7 @@ export function registerRoutes(router: Router) {
 }
 
 // app.ts
-import { Application } from "contro";
+import { Application } from "katal";
 import { registerRoutes } from "./routes";
 
 const app = new Application();

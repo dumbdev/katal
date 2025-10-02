@@ -1,12 +1,12 @@
 # Authentication
 
 ## Overview
-Contro provides a built-in authentication system using JWT (JSON Web Tokens) with a simplified, secure implementation that works with Bun's crypto capabilities.
+Katal provides a built-in authentication system using JWT (JSON Web Tokens) with a simplified, secure implementation that works with Bun's crypto capabilities.
 
 ## Basic Usage
 
 ```typescript
-import { Auth } from 'contro/auth';
+import { Auth } from 'katal/auth';
 
 // Initialize auth with configuration
 const auth = new Auth({
@@ -52,7 +52,7 @@ const isValid = await auth.verifyPassword('user-password', hashedPassword);
 ## Auth Middleware
 
 ```typescript
-import { AuthMiddleware } from 'contro/middleware';
+import { AuthMiddleware } from 'katal/middleware';
 
 // Protect routes with authentication
 app.registerMiddleware('auth', new AuthMiddleware(auth));

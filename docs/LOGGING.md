@@ -1,7 +1,7 @@
 # Logging
 
 ## Overview
-Contro's logging system provides a flexible, extensible logging solution with multiple destinations and log levels.
+Katal's logging system provides a flexible, extensible logging solution with multiple destinations and log levels.
 
 ## Features
 - Multiple log levels (DEBUG, INFO, WARN, ERROR)
@@ -15,7 +15,7 @@ Contro's logging system provides a flexible, extensible logging solution with mu
 ## Basic Usage
 
 ```typescript
-import { LoggingIntegration, LogLevel } from 'contro/logging';
+import { LoggingIntegration, LogLevel } from 'katal/logging';
 
 const logger = new LoggingIntegration()
     .setMinLevel(LogLevel.INFO)
