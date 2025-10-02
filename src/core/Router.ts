@@ -15,6 +15,7 @@ export interface RouteOptions {
 
 export class Router {
     private routes: RouteDefinition[] = [];
+    private prefix: string = '';
 
     /**
      * Register a GET route with a controller
@@ -72,6 +73,18 @@ export class Router {
     }
 
     /**
+     * Group routes with a common prefix
+     */
+    group(prefix: string, callback: (router: Router) => void): void {
+        const previousPrefix = this.prefix;
+        this.prefix = this.normalizePath(previousPrefix + prefix);
+
+        callback(this);
+
+        this.prefix = previousPrefix;
+    }
+
+    /**
      * Register a controller for a route
      */
     private registerController(
@@ -80,6 +93,7 @@ export class Router {
         ControllerClass: new () => Controller,
         options?: RouteOptions,
     ): void {
+        const fullPath = this.normalizePath(this.prefix + path);
         const handler: RouteHandler = async (context) => {
             // Validate if schema provided
             if (options?.validation) {
@@ -107,7 +121,7 @@ export class Router {
             return await controller.execute(context);
         };
 
-        this.addRoute(method, path, handler, options?.middleware ?? []);
+        this.addRoute(method, fullPath, handler, options?.middleware ?? []);
     }
 
     /**
@@ -239,7 +253,18 @@ export class Router {
      * Normalize path
      */
     private normalizePath(path: string): string {
-        return path === "/" ? "/" : path.replace(/\/$/, "");
+        // Handle root path
+        if (path === "/") return "/";
+
+        // Remove trailing slashes
+        let normalized = path.replace(/\/$/, "");
+
+        // Ensure path starts with slash (unless it's empty)
+        if (normalized && !normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+
+        return normalized;
     }
 
     /**
