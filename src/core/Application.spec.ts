@@ -126,13 +126,18 @@ describe("Application", () => {
         const server = app.getServer()
         expect(server).toBeDefined()
 
-        const response = await fetch(`http://${server?.hostname}:${server?.port}/error`)
-        type ErrorResponse = { error: string; message: string }
-        const data = await response.json() as ErrorResponse
+        try {
+            const response = await fetch(`http://${server?.hostname}:${server?.port}/error`)
 
-        expect(response.status).toBe(500)
-        expect(data.error).toBe("Internal Server Error")
-        expect(data.message).toBe("Test error")
+            // Verify error response structure
+            expect(response.status).toBe(500)
+
+            const data = await response.json() as { error: string; message: string }
+            expect(data.error).toBe("Internal Server Error")
+            expect(data.message).toBe("Test error")
+        } catch (error) {
+            throw new Error("Test failed to handle error gracefully: " + error)
+        }
     })
 
     it("should boot only once", async () => {
