@@ -386,7 +386,6 @@ router.get('/admin/dashboard', AdminDashboardController, {
 3. Controller's `beforeHandle` method
 4. Controller's `handle` method
 5. Controller's `afterHandle` method
-```
 
 ### 🔌 Error Handling
 
@@ -456,7 +455,6 @@ Katal provides built-in error handling with the following features:
        ]
    }
    ```
-```
 
 ### 🏗️ Custom Base Controllers
 
@@ -659,6 +657,28 @@ router.group('/api/v1', (router) => {
         middleware: ['auth', 'admin']
     });
 });
+
+// Group with path prefix and options
+router.group('/api/v2', (router) => {
+    // Inherits group middleware and validation
+    router.get('/profile', UserProfileController);
+    // Overrides group validation, merges middleware
+    router.post('/profile', UpdateProfileController, {
+        middleware: ['profile-edit'],
+        validation: { email: { type: 'email', required: true } }
+    });
+}, {
+    middleware: ['auth'],
+    validation: { name: { type: 'string', required: true } }
+});
+
+/**
+ * You can pass a third argument to router.group for route options:
+ * - `middleware`: Array of middleware names to apply to all routes in the group (merged with per-route middleware).
+ * - `validation`: Validation schema to apply to all routes in the group (overridden by per-route validation).
+ *
+ * Per-route options will override or merge with group options as appropriate.
+ */
 ```
 
 ### ✅ Validation
