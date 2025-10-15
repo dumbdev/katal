@@ -241,4 +241,30 @@ describe("Router", () => {
         expect(routes[0]!.path).toBe("/api/users");
         expect(routes[0]!.middleware).toEqual(["auth"]);
     });
+
+    it("should apply group options to all routes in the group", () => {
+        const router = new Router();
+        const groupValidation = { name: { type: "string" as const, required: true } };
+        router.group("/api", (r) => {
+            r.post("/users", TestController); // should inherit group options
+            r.post("/admins", TestController, {
+                middleware: ["admin"], // should merge with group middleware
+                validation: { role: { type: "string", required: true } }, // should override group validation
+            });
+        }, {
+            middleware: ["auth"],
+            validation: groupValidation,
+        });
+
+        const routes = router.getRoutes();
+        expect(routes).toHaveLength(2);
+        // First route should inherit group middleware and validation
+        expect(routes[0]!.middleware).toEqual(["auth"]);
+        expect(routes[0]!.path).toBe("/api/users");
+        expect(routes[0]!.handler).toBeDefined();
+        // Second route should merge middleware and override validation
+        expect(routes[1]!.middleware).toEqual(["auth", "admin"]);
+        expect(routes[1]!.path).toBe("/api/admins");
+        expect(routes[1]!.handler).toBeDefined();
+    });
 });
