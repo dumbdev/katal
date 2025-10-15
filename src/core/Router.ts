@@ -16,6 +16,7 @@ export interface RouteOptions {
 export class Router {
     private routes: RouteDefinition[] = [];
     private prefix: string = '';
+    private groupOptions?: RouteOptions;
 
     /**
      * Register a GET route with a controller
@@ -73,17 +74,20 @@ export class Router {
     }
 
     /**
-     * Group routes with a common prefix
+     * Group routes with a common prefix and options
      */
-    group(prefix: string, callback: (router: Router) => void): void {
+    group(prefix: string, callback: (router: Router) => void, options?: RouteOptions): void {
         const previousPrefix = this.prefix;
+        const previousGroupOptions = this.groupOptions;
         const combinedPath = previousPrefix
             ? this.normalizePath(previousPrefix + "/" + prefix)
             : this.normalizePath(prefix);
 
         this.prefix = combinedPath;
+        this.groupOptions = options;
         callback(this);
         this.prefix = previousPrefix;
+        this.groupOptions = previousGroupOptions;
     }
 
     /**
@@ -99,12 +103,23 @@ export class Router {
             ? this.normalizePath(this.prefix + "/" + path)
             : this.normalizePath(path);
 
+        // Merge group options with route options
+        const mergedOptions: RouteOptions = {
+            ...(this.groupOptions ?? {}),
+            ...(options ?? {}),
+            middleware: [
+                ...(this.groupOptions?.middleware ?? []),
+                ...(options?.middleware ?? []),
+            ],
+            validation: options?.validation ?? this.groupOptions?.validation,
+        };
+
         const handler: RouteHandler = async (context) => {
             // Validate if schema provided
-            if (options?.validation) {
+            if (mergedOptions?.validation) {
                 const { valid, errors } = Validator.validate(
                     context.body,
-                    options.validation,
+                    mergedOptions.validation,
                 );
                 if (!valid) {
                     return new Response(
@@ -126,7 +141,7 @@ export class Router {
             return await controller.execute(context);
         };
 
-        this.addRoute(method, fullPath, handler, options?.middleware ?? []);
+        this.addRoute(method, fullPath, handler, mergedOptions.middleware ?? []);
     }
 
     /**
